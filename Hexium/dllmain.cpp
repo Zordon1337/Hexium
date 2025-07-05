@@ -159,9 +159,12 @@ BOOL WINAPI hk_SwapBuffers(HDC hdc) {
 
 DWORD WINAPI Entry(LPVOID lpParam)
 {
+#if _DEBUG
 	AllocConsole();
 	FILE* pFile;
 	freopen_s(&pFile, "CONOUT$", "w", stdout);
+	SetConsoleTitleA("Hexium Debug Console");
+#endif
 
 	if (MH_Initialize() != MH_OK) {
 		return 1;
