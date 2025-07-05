@@ -95,21 +95,28 @@ bool __fastcall HasHidden(void* a1)
 	return CFG::bDisableHD ? false : result;
 }
 
-using StartGameFn = DWORD(__thiscall*)(void* a1);
+using StartGameFn = DWORD(__fastcall*)(void* thisptr, void* edx, void* a2);
 inline StartGameFn pStartGameOG = nullptr;
-DWORD __fastcall StartGame(void* a1)
+DWORD __fastcall StartGame(void* thisptr, void* edx, void* a2)
 {
 	G::isPlaying = true;
 	printf("Playing!\n");
-	return pStartGameOG(a1);
+	if (pStartGameOG)
+		return pStartGameOG(thisptr, edx, a2);
+	else
+	{
+		printf("No OG!");
+		return 0;
+	}
 }
+
 
 using WndProcFn = LRESULT(WINAPI*)(HWND, UINT, WPARAM, LPARAM);
 inline WndProcFn pWndProcOG = nullptr;
 
 LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+	if (G::isMenuOpen && ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
 		return 1;
 
 	return CallWindowProc(pWndProcOG, hwnd, msg, wParam, lParam);
