@@ -9,6 +9,12 @@
 
 #include "globals.h"
 
+#include "ImGui/imgui_impl_win32.h"
+#pragma comment(lib, "opengl32.lib")
+#include "ImGui/imgui_impl_opengl3.h"
+
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 bool ParsePattern(const char* pattern, std::vector<uint8_t>& bytes, std::vector<bool>& mask) {
 	std::istringstream iss(pattern);
 	std::string byteStr;
@@ -64,9 +70,8 @@ using ChannelSetAttrFn = bool(__stdcall*)(LONG handle, int attrib, float value);
 inline ChannelSetAttrFn pChannelSetAttrOG = nullptr;
 bool __stdcall ChannelSetAttrDetour(LONG handle, int attrib, float value)
 {
-	if (attrib == 65536) {
-		printf("\"Fixing\" tempo :tf:\n");
-		return pChannelSetAttrOG(handle, attrib, -10.f);
+	if (attrib == 65536 && CFG::bTimewarp) {
+		return pChannelSetAttrOG(handle, attrib, (CFG::flTimewarpSpeed * 100) - 100);
 	}
 	return pChannelSetAttrOG(handle, attrib, value);
 }
@@ -77,18 +82,67 @@ void __fastcall OnDraw(void* a1)
 {
 	G::isDrawing = true;
 	pOnDrawOG(a1);
-	G::isDrawing = false;
-
+	G::isDrawing = false; // refactor this shit, setting isDrawing before function is completed
 }
 
 using HasHiddenFn = bool(__fastcall*)(void* a1);
 inline HasHiddenFn pHasHiddenOG = nullptr;
 bool __fastcall HasHidden(void* a1)
 {
+
 	bool result = pHasHiddenOG(a1);
-	if (G::isDrawing) return false;
-	else return result;
+
+	return CFG::bDisableHD ? false : result;
 }
+
+using WndProcFn = LRESULT(WINAPI*)(HWND, UINT, WPARAM, LPARAM);
+inline WndProcFn pWndProcOG = nullptr;
+
+LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+		return 1;
+
+	return CallWindowProc(pWndProcOG, hwnd, msg, wParam, lParam);
+}
+
+typedef BOOL(WINAPI* SwapBuffers_t)(HDC);
+SwapBuffers_t o_SwapBuffers = nullptr;
+BOOL WINAPI hk_SwapBuffers(HDC hdc) {
+	static bool initialized = false;
+	if (!initialized && wglGetCurrentContext()) {
+		HWND hwnd = WindowFromDC(hdc);
+		ImGui::CreateContext();
+		ImGui_ImplWin32_Init(hwnd);
+		ImGui_ImplOpenGL3_Init();
+		initialized = true;
+
+		// why the fuck it even works
+		pWndProcOG = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
+	}
+
+	if (initialized && G::isMenuOpen) {
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::Begin("Hexium - Internal Cheat for Hexis");
+		
+		ImGui::Checkbox("Disable HD (Requires map restart)", &CFG::bDisableHD);
+		ImGui::Spacing();
+		ImGui::Checkbox("Timewarp", &CFG::bTimewarp);
+		if (CFG::bTimewarp) {
+			ImGui::SliderFloat("Speed", &CFG::flTimewarpSpeed, 0.1f, 2.f);
+		}
+		ImGui::End();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
+
+	return o_SwapBuffers(hdc);
+}
+
 
 DWORD WINAPI Entry(LPVOID lpParam)
 {
@@ -125,11 +179,26 @@ DWORD WINAPI Entry(LPVOID lpParam)
 		reinterpret_cast<LPVOID*>(&pHasHiddenOG)
 	);
 
+	HMODULE hGDI = GetModuleHandleA("gdi32.dll");
+	void* pSwapBuffers = GetProcAddress(hGDI, "SwapBuffers");
+
+	if (MH_CreateHook(pSwapBuffers, &hk_SwapBuffers, reinterpret_cast<void**>(&o_SwapBuffers)) != MH_OK) {
+		printf("Failed to create SwapBuffers hook\n");
+		return -1;
+	}
+
 	if (MH_EnableHook(MH_ALL_HOOKS) != MH_STATUS::MH_OK) {
 		printf("Failed to enable hooks!\n");
 	}
 	
-	while(true) {}
+	while(true) {
+
+		if (GetAsyncKeyState(VK_INSERT) & 1) {
+			G::isMenuOpen = !G::isMenuOpen;
+		}
+
+		Sleep(5); // sleep to stop cpu usage
+	}
 	return 0;
 }
 

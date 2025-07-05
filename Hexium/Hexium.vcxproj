@@ -141,6 +141,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ImGui\imgui.cpp" />
+    <ClCompile Include="ImGui\imgui_demo.cpp" />
+    <ClCompile Include="ImGui\imgui_draw.cpp" />
+    <ClCompile Include="ImGui\imgui_impl_opengl2.cpp" />
+    <ClCompile Include="ImGui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="ImGui\imgui_tables.cpp" />
+    <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Minhook\MinHook\buffer.c" />
     <ClCompile Include="Minhook\MinHook\hde\hde32.c" />
     <ClCompile Include="Minhook\MinHook\hde\hde64.c" />
@@ -149,6 +157,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.h" />
+    <ClInclude Include="ImGui\imconfig.h" />
+    <ClInclude Include="ImGui\imgui.h" />
+    <ClInclude Include="ImGui\imgui_impl_opengl2.h" />
+    <ClInclude Include="ImGui\imgui_impl_opengl3.h" />
+    <ClInclude Include="ImGui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="ImGui\imgui_impl_win32.h" />
+    <ClInclude Include="ImGui\imgui_internal.h" />
+    <ClInclude Include="ImGui\imstb_rectpack.h" />
+    <ClInclude Include="ImGui\imstb_textedit.h" />
+    <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="Minhook\MinHook.h" />
     <ClInclude Include="Minhook\MinHook\buffer.h" />
     <ClInclude Include="Minhook\MinHook\hde\hde32.h" />

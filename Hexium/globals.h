@@ -9,4 +9,11 @@
     }
 namespace G {
 	inline bool isDrawing = false;
+    inline bool isMenuOpen = true;
+    
+}
+namespace CFG {
+    inline bool bDisableHD = false;
+    inline bool bTimewarp = false;
+	inline float flTimewarpSpeed = 1.0f;
 }
