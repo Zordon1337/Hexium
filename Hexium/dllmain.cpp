@@ -95,6 +95,15 @@ bool __fastcall HasHidden(void* a1)
 	return CFG::bDisableHD ? false : result;
 }
 
+using StartGameFn = DWORD(__thiscall*)(void* a1);
+inline StartGameFn pStartGameOG = nullptr;
+DWORD __fastcall StartGame(void* a1)
+{
+	G::isPlaying = true;
+	printf("Playing!\n");
+	return pStartGameOG(a1);
+}
+
 using WndProcFn = LRESULT(WINAPI*)(HWND, UINT, WPARAM, LPARAM);
 inline WndProcFn pWndProcOG = nullptr;
 
@@ -160,6 +169,8 @@ DWORD WINAPI Entry(LPVOID lpParam)
 	CHECK_PATTERN(OnDrawPtr);
 	auto HasHiddenPtr = PatternScan("Hexis.exe", "8A 41 ? C3 CC CC CC CC CC CC CC CC CC CC CC CC 33 C0 39 41");
 	CHECK_PATTERN(HasHiddenPtr);
+	auto StartGamePtr = PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? 53 56 57 A1 ? ? ? ? 33 C5 50 8D 45 ? 64 A3 ? ? ? ? 8B F9 89 7D ? 33 DB 8D B7");
+	CHECK_PATTERN(StartGamePtr);
 
 
 	MH_CreateHook(
@@ -177,6 +188,11 @@ DWORD WINAPI Entry(LPVOID lpParam)
 		HasHiddenPtr,
 		&HasHidden,
 		reinterpret_cast<LPVOID*>(&pHasHiddenOG)
+	);
+	MH_CreateHook(
+		StartGamePtr,
+		&StartGame,
+		reinterpret_cast<LPVOID*>(&pStartGameOG)
 	);
 
 	HMODULE hGDI = GetModuleHandleA("gdi32.dll");
