@@ -94,13 +94,17 @@ bool __fastcall HasHidden(void* a1)
 
 	return CFG::bDisableHD ? false : result;
 }
+#include <chrono>
 
+// Global
+inline std::chrono::steady_clock::time_point g_GameStartTime;
 using StartGameFn = DWORD(__fastcall*)(void* thisptr, void* edx, void* a2);
 inline StartGameFn pStartGameOG = nullptr;
 DWORD __fastcall StartGame(void* thisptr, void* edx, void* a2)
 {
 	G::isPlaying = true;
 	printf("Playing!\n");
+	g_GameStartTime = std::chrono::steady_clock::now();
 	if (pStartGameOG)
 		return pStartGameOG(thisptr, edx, a2);
 	else
@@ -162,8 +166,23 @@ BOOL WINAPI hk_SwapBuffers(HDC hdc) {
 
 	return o_SwapBuffers(hdc);
 }
+struct MouseInput {
+	int x;
+	int y;
+	int leftButtonDown;
+	int rightButtonDown;
+	int middleButtonDown;
+};
 
-
+using GetCursorInfoFn = int(__cdecl*)(MouseInput* a1);
+inline GetCursorInfoFn pGetCursorPosOG = nullptr;
+int __cdecl GetCursorInfoDetour(MouseInput* a1) {
+	int result = pGetCursorPosOG(a1);
+	//printf("Cursor Position: %i, %i\n", a1->x, a1->y);
+	a1->x = 500;
+	a1->y = 360;
+	return result;
+}
 DWORD WINAPI Entry(LPVOID lpParam)
 {
 #if _DEBUG
@@ -185,7 +204,8 @@ DWORD WINAPI Entry(LPVOID lpParam)
 	CHECK_PATTERN(HasHiddenPtr, "HasHidden");
 	auto StartGamePtr = PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? 53 56 57 A1 ? ? ? ? 33 C5 50 8D 45 ? 64 A3 ? ? ? ? 8B F9 89 7D ? 33 DB 8D B7");
 	CHECK_PATTERN(StartGamePtr, "StartGame");
-
+	auto GetCursorInfoPtr = PatternScan("Hexis.exe", "55 8B EC 83 EC ? 8D 45 ? 0F 57 C0");
+	CHECK_PATTERN(GetCursorInfoPtr, "GetCursorInfo");
 
 	MH_CreateHook(
 		BASS_ChannelSetAttribute,
@@ -208,7 +228,11 @@ DWORD WINAPI Entry(LPVOID lpParam)
 		&StartGame,
 		reinterpret_cast<LPVOID*>(&pStartGameOG)
 	);
-
+	MH_CreateHook(
+		GetCursorPosPtr,
+		&GetCursorPosDetour,
+		reinterpret_cast<LPVOID*>(&pGetCursorPosOG)
+	);
 	HMODULE hGDI = GetModuleHandleA("gdi32.dll");
 	void* pSwapBuffers = GetProcAddress(hGDI, "SwapBuffers");
 
@@ -226,8 +250,7 @@ DWORD WINAPI Entry(LPVOID lpParam)
 		if (GetAsyncKeyState(VK_INSERT) & 1) {
 			G::isMenuOpen = !G::isMenuOpen;
 		}
-
-		Sleep(5); // sleep to stop cpu usage
+		Sleep(5); 
 	}
 	return 0;
 }
