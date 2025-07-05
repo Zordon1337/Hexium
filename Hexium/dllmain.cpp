@@ -105,7 +105,7 @@ DWORD __fastcall StartGame(void* thisptr, void* edx, void* a2)
 		return pStartGameOG(thisptr, edx, a2);
 	else
 	{
-		printf("No OG!");
+		printf("pStartGameOG is NULL!");
 		return 0;
 	}
 }
