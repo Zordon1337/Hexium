@@ -1,11 +1,11 @@
 #pragma once
-#define CHECK_PATTERN(PATTERN) \
+#define CHECK_PATTERN(PATTERN, NAME) \
     if (!PATTERN) { \
-        printf("Pattern not found!\n"); \
+        printf("%s not found!\n", NAME); \
         MH_Uninitialize(); \
         return false; \
     } else { \
-        printf("Pattern found at: %p\n", PATTERN); \
+        printf("%s found at: %p\n", NAME, PATTERN); \
     }
 
 namespace G {

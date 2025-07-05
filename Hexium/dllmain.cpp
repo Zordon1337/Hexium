@@ -128,13 +128,17 @@ BOOL WINAPI hk_SwapBuffers(HDC hdc) {
 
 		// why the fuck it even works
 		pWndProcOG = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
+
+		auto io = ImGui::GetIO();
+
+		io.FontDefault = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Verdana.ttf",16.f);
 	}
 
 	if (initialized && G::isMenuOpen) {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
+		ImGui::StyleColorsLight();
 		ImGui::Begin("Hexium - Internal Cheat for Hexis");
 		
 		ImGui::Checkbox("Disable HD (Requires map restart)", &CFG::bDisableHD);
@@ -164,13 +168,13 @@ DWORD WINAPI Entry(LPVOID lpParam)
 	}
 
 	auto BASS_ChannelSetAttribute = GetProcAddress(GetModuleHandleA("bass.dll"), "BASS_ChannelSetAttribute");
-	CHECK_PATTERN(BASS_ChannelSetAttribute);
+	CHECK_PATTERN(BASS_ChannelSetAttribute, "BASS_ChannelSetAttribute");
 	auto OnDrawPtr = PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 81 EC ? ? ? ? 53 56 57 A1 ? ? ? ? 33 C5 50 8D 45 ? 64 A3 ? ? ? ? 89 4D ? 8B 59");
-	CHECK_PATTERN(OnDrawPtr);
+	CHECK_PATTERN(OnDrawPtr, "OnDraw");
 	auto HasHiddenPtr = PatternScan("Hexis.exe", "8A 41 ? C3 CC CC CC CC CC CC CC CC CC CC CC CC 33 C0 39 41");
-	CHECK_PATTERN(HasHiddenPtr);
+	CHECK_PATTERN(HasHiddenPtr, "HasHidden");
 	auto StartGamePtr = PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? 53 56 57 A1 ? ? ? ? 33 C5 50 8D 45 ? 64 A3 ? ? ? ? 8B F9 89 7D ? 33 DB 8D B7");
-	CHECK_PATTERN(StartGamePtr);
+	CHECK_PATTERN(StartGamePtr, "StartGame");
 
 
 	MH_CreateHook(
