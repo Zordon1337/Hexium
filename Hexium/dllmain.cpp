@@ -175,9 +175,9 @@ struct MouseInput {
 };
 
 using GetCursorInfoFn = int(__cdecl*)(MouseInput* a1);
-inline GetCursorInfoFn pGetCursorPosOG = nullptr;
+inline GetCursorInfoFn pGetCursorInfoOG = nullptr;
 int __cdecl GetCursorInfoDetour(MouseInput* a1) {
-	int result = pGetCursorPosOG(a1);
+	int result = pGetCursorInfoOG(a1);
 	//printf("Cursor Position: %i, %i\n", a1->x, a1->y);
 	a1->x = 500;
 	a1->y = 360;
@@ -229,9 +229,9 @@ DWORD WINAPI Entry(LPVOID lpParam)
 		reinterpret_cast<LPVOID*>(&pStartGameOG)
 	);
 	MH_CreateHook(
-		GetCursorPosPtr,
-		&GetCursorPosDetour,
-		reinterpret_cast<LPVOID*>(&pGetCursorPosOG)
+		GetCursorInfoPtr,
+		&GetCursorInfoDetour,
+		reinterpret_cast<LPVOID*>(&pGetCursorInfoOG)
 	);
 	HMODULE hGDI = GetModuleHandleA("gdi32.dll");
 	void* pSwapBuffers = GetProcAddress(hGDI, "SwapBuffers");
