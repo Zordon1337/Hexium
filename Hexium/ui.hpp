@@ -3,13 +3,17 @@
 #include "ImGui/imgui_impl_win32.h"
 #pragma comment(lib, "opengl32.lib")
 #include "ImGui/imgui_impl_opengl3.h"
-
+#include "ImGui/imgui_impl_dx9.h"
 namespace UIConfig {
     inline bool bDisableHD = false;
     inline bool bTimewarp = false;
     inline float flTimewarpSpeed = 1.0f;
 }
-
+namespace UIGlobals {
+    inline bool bIsOpenGL = false;
+	inline IDirect3DDevice9* pDevice = nullptr;
+	inline HWND hwnd = nullptr;
+}
 class UI {
     public:
     bool Initialized = false;
@@ -20,7 +24,9 @@ class UI {
 
         ImGui::CreateContext();
         ImGui_ImplWin32_Init(hwnd);
-        ImGui_ImplOpenGL3_Init();
+		if (UIGlobals::bIsOpenGL) {
+			ImGui_ImplOpenGL3_Init();
+		}
         Initialized = true;
 
         auto io = ImGui::GetIO();
@@ -31,8 +37,13 @@ class UI {
     void Render() {
         if (!Initialized || !IsOpen) return;
 
-        ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplWin32_NewFrame();
+        if (UIGlobals::bIsOpenGL) {
+            ImGui_ImplOpenGL3_NewFrame();
+        }
+        else {
+			ImGui_ImplDX9_NewFrame();
+        }
         ImGui::NewFrame();
         ImGui::StyleColorsLight();
         ImGui::Begin("Hexium - Internal Cheat for Hexis");
@@ -46,6 +57,11 @@ class UI {
         ImGui::End();
 
         ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		if (UIGlobals::bIsOpenGL) {
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		}
+        else {
+            ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+        }
     }
 };
