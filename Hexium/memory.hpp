@@ -11,10 +11,11 @@ class QByteArray;
 namespace M {
 	using ToUtf8Fn = QByteArray * (__stdcall*)(QString* thisPtr);
 	using ConstDataFn = const char* (__cdecl*)(QByteArray* thisPtr);
+	using ToQString = void(__cdecl*)(QString* newString, const char* str, int len);
 
 	inline ToUtf8Fn QString_toUtf8 = nullptr;
 	inline ConstDataFn QByteArray_constData = nullptr;
-
+	inline ToQString Utf8_toQString = nullptr;
 	// Pattern parsing + scanning
 	inline bool ParsePattern(const char* pattern, std::vector<uint8_t>& bytes, std::vector<bool>& mask) {
 		std::istringstream iss(pattern);
@@ -77,8 +78,8 @@ namespace M {
 
 		QString_toUtf8 = reinterpret_cast<ToUtf8Fn>(GetProcAddress(qtcore, "?toUtf8@QString@@QBE?AVQByteArray@@XZ"));
 		QByteArray_constData = reinterpret_cast<ConstDataFn>(GetProcAddress(qtcore, "?constData@QByteArray@@QBEPBDXZ"));
-
-		if (!QString_toUtf8 || !QByteArray_constData) {
+		Utf8_toQString = reinterpret_cast<ToQString>(GetProcAddress(qtcore, "?fromUtf8@QString@@SA?AV1@PBDH@Z"));
+		if (!QString_toUtf8 || !QByteArray_constData || !Utf8_toQString) {
 			LOG_ERROR("Failed to resolve qt5core functions");
 			return false;
 		}

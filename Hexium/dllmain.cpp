@@ -22,7 +22,8 @@ DWORD WINAPI Entry(LPVOID lpParam)
 	
 	G::menu = std::make_shared<UI>();
 
-	if (!H::Init()) return -1;
+	if (!M::Init()) return -1; // Init Memory
+	if (!H::Init()) return -1; // Init Hooks
 
 	while (true) {
 		if (GetAsyncKeyState(VK_INSERT) & 1) {
