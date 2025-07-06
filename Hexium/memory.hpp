@@ -5,7 +5,16 @@
 #include <string>
 #include <sstream>
 
+class QString;
+class QByteArray;
+
 namespace M {
+	using ToUtf8Fn = QByteArray * (__stdcall*)(QString* thisPtr);
+	using ConstDataFn = const char* (__cdecl*)(QByteArray* thisPtr);
+
+	inline ToUtf8Fn QString_toUtf8 = nullptr;
+	inline ConstDataFn QByteArray_constData = nullptr;
+
 	// Pattern parsing + scanning
 	inline bool ParsePattern(const char* pattern, std::vector<uint8_t>& bytes, std::vector<bool>& mask) {
 		std::istringstream iss(pattern);
@@ -56,6 +65,23 @@ namespace M {
 		}
 
 		return nullptr;
+	}
+
+	inline bool Init() {
+
+		HMODULE qtcore = GetModuleHandleA("Qt5Core.dll");
+		if (!qtcore) {
+			LOG_ERROR("Qt5Core not loaded");
+			return false;
+		}
+
+		QString_toUtf8 = reinterpret_cast<ToUtf8Fn>(GetProcAddress(qtcore, "?toUtf8@QString@@QBE?AVQByteArray@@XZ"));
+		QByteArray_constData = reinterpret_cast<ConstDataFn>(GetProcAddress(qtcore, "?constData@QByteArray@@QBEPBDXZ"));
+
+		if (!QString_toUtf8 || !QByteArray_constData) {
+			LOG_ERROR("Failed to resolve qt5core functions");
+			return false;
+		}
 	}
 
 }

@@ -17,6 +17,8 @@
         if (MH_CreateHook(reinterpret_cast<LPVOID>(TARGET), reinterpret_cast<LPVOID>(DETOUR), reinterpret_cast<LPVOID*>(ORIGINAL)) != MH_OK) { \
             LOG_ERROR("Failed to create %s hook!\n", NAME); \
             return false; \
+        } else { \
+            LOG_SUCCESS("%s hook created successfully!\n", NAME); \
         } \
     } while (0)
 

@@ -13,6 +13,97 @@
 #include "ui.hpp"
 #include "memory.hpp"
 
+class QString {
+private:
+	char* m_data;
+	int m_length;
+
+public:
+	// Default constructor
+	QString() : m_data(nullptr), m_length(0) {}
+
+	// Constructor from const char*
+	QString(const char* str) {
+		if (str) {
+			m_length = static_cast<int>(std::strlen(str));
+			m_data = new char[m_length + 1];
+			std::memcpy(m_data, str, m_length + 1);
+		}
+		else {
+			m_data = nullptr;
+			m_length = 0;
+		}
+	}
+
+	// Copy constructor
+	QString(const QString& other) {
+		m_length = other.m_length;
+		if (other.m_data) {
+			m_data = new char[m_length + 1];
+			std::memcpy(m_data, other.m_data, m_length + 1);
+		}
+		else {
+			m_data = nullptr;
+		}
+	}
+
+	// Move constructor
+	QString(QString&& other) noexcept {
+		m_data = other.m_data;
+		m_length = other.m_length;
+		other.m_data = nullptr;
+		other.m_length = 0;
+	}
+
+	// Copy assignment
+	QString& operator=(const QString& other) {
+		if (this != &other) {
+			delete[] m_data;
+			m_length = other.m_length;
+			if (other.m_data) {
+				m_data = new char[m_length + 1];
+				std::memcpy(m_data, other.m_data, m_length + 1);
+			}
+			else {
+				m_data = nullptr;
+			}
+		}
+		return *this;
+	}
+
+	// Move assignment
+	QString& operator=(QString&& other) noexcept {
+		if (this != &other) {
+			delete[] m_data;
+			m_data = other.m_data;
+			m_length = other.m_length;
+			other.m_data = nullptr;
+			other.m_length = 0;
+		}
+		return *this;
+	}
+
+	// Destructor
+	~QString() {
+		delete[] m_data;
+	}
+
+	// Length
+	int length() const {
+		return m_length;
+	}
+
+	// toUtf8: mimic Qt API (here just return std::string)
+	std::string toUtf8() const {
+		return m_data ? std::string(m_data) : std::string();
+	}
+
+	// const char* access
+	const char* c_str() const {
+		return m_data;
+	}
+};
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
@@ -60,6 +151,23 @@ namespace H {
 	inline ChannelSetAttrFn pChannelSetAttrOG = nullptr;
 	bool __stdcall ChannelSetAttrDetour(LONG handle, int attrib, float value);
 
+	using PrintNotifFn = void(__cdecl*)(QString* message, int durationMs);
+	inline PrintNotifFn pPrintNotifOG = nullptr;
+
+
+	// TODO: Move body to Hooks/PrintNotification.cpp
+	inline void __cdecl PrintNotifDetour(QString* message, int durationMs) {
+
+		// call og func first otherwise in game we will see funny chinese text lmao
+		pPrintNotifOG(message, durationMs);
+
+		if (message && M::QString_toUtf8 && M::QByteArray_constData) {
+			QByteArray* utf8 = M::QString_toUtf8(message);
+			const char* text = M::QByteArray_constData(utf8);
+			if (text)
+				printf("[Notification] %s\n", text);
+		}
+	}
 
 	// Initialize all hooks
 	inline bool Init() {
@@ -81,6 +189,8 @@ namespace H {
 		CHECK_PATTERN(StartGamePtr, "StartGame");
 		auto GetCursorInfoPtr = M::PatternScan("Hexis.exe", "55 8B EC 83 EC ? 8D 45 ? 0F 57 C0");
 		CHECK_PATTERN(GetCursorInfoPtr, "GetCursorInfo");
+		auto PrintPtr = M::PatternScan("Hexis.exe", "55 8B EC A1 ? ? ? ? 85 C0 74 ? 8D 88 ? ? ? ? 85 C9 74 ? FF 75 ? FF 75 ? 6A ? 6A ? 6A");
+		CHECK_PATTERN(PrintPtr, "PrintNotification");
 
 		// Create hooks
 		CREATE_HOOK(SwapBuffersPtr, &H::hk_SwapBuffers, &H::pSwapBuffersOG, "SwapBuffers");
@@ -89,10 +199,12 @@ namespace H {
 		CREATE_HOOK(HasHiddenPtr, &H::HasHidden, &H::pHasHiddenOG, "HasHidden");
 		CREATE_HOOK(StartGamePtr, &H::StartGame, &H::pStartGameOG, "StartGame");
 		CREATE_HOOK(GetCursorInfoPtr, &H::GetCursorInfoDetour, &H::pGetCursorInfoOG, "GetCursorInfo");
+		CREATE_HOOK(PrintPtr, &PrintNotifDetour, &pPrintNotifOG, "PrintNotification");
+
 
 		// Enable hooks
 		if (MH_EnableHook(MH_ALL_HOOKS) != MH_STATUS::MH_OK) {
-			printf("Failed to enable hooks!\n");
+			LOG_ERROR("Failed to enable hooks!\n");
 			return false;
 		}
 
