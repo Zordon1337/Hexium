@@ -1,22 +1,19 @@
-#include <Windows.h>
-#include "Minhook/MinHook.h"
-#include <cstdint>
-#include <cstdio>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <cctype>
+#pragma once
 
+#include <sstream>
+#include <vector>
+#include <libloaderapi.h>
 #include "globals.hpp"
-#include "hooks.hpp"
-#include "ui.hpp"
+#include "Minhook/MinHook.h"
 
 #include "ImGui/imgui_impl_win32.h"
 #pragma comment(lib, "opengl32.lib")
 #include "ImGui/imgui_impl_opengl3.h"
+#include "ui.hpp"
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+// Pattern parsing + scanning
 bool ParsePattern(const char* pattern, std::vector<uint8_t>& bytes, std::vector<bool>& mask) {
 	std::istringstream iss(pattern);
 	std::string byteStr;
@@ -68,12 +65,14 @@ uint8_t* PatternScan(const char* module, const char* pattern) {
 	return nullptr;
 }
 
+
+// Hooks
 using ChannelSetAttrFn = bool(__stdcall*)(LONG handle, int attrib, float value);
 inline ChannelSetAttrFn pChannelSetAttrOG = nullptr;
 bool __stdcall ChannelSetAttrDetour(LONG handle, int attrib, float value)
 {
-	if (attrib == 65536 && CFG::bTimewarp) {
-		return pChannelSetAttrOG(handle, attrib, (CFG::flTimewarpSpeed * 100) - 100);
+	if (attrib == 65536 && UIConfig::bTimewarp) {
+		return pChannelSetAttrOG(handle, attrib, (UIConfig::flTimewarpSpeed * 100) - 100);
 	}
 	return pChannelSetAttrOG(handle, attrib, value);
 }
@@ -91,22 +90,17 @@ using HasHiddenFn = bool(__fastcall*)(void* a1);
 inline HasHiddenFn pHasHiddenOG = nullptr;
 bool __fastcall HasHidden(void* a1)
 {
-
 	bool result = pHasHiddenOG(a1);
-
-	return CFG::bDisableHD ? false : result;
+	return UIConfig::bDisableHD ? false : result;
 }
-#include <chrono>
 
-// Global
-inline std::chrono::steady_clock::time_point g_GameStartTime;
 using StartGameFn = DWORD(__fastcall*)(void* thisptr, void* edx, void* a2);
 inline StartGameFn pStartGameOG = nullptr;
 DWORD __fastcall StartGame(void* thisptr, void* edx, void* a2)
 {
 	G::isPlaying = true;
+	G::menu->IsOpen = false; // auto hide menu on game start
 	printf("Playing!\n");
-	g_GameStartTime = std::chrono::steady_clock::now();
 	if (pStartGameOG)
 		return pStartGameOG(thisptr, edx, a2);
 	else
@@ -116,118 +110,94 @@ DWORD __fastcall StartGame(void* thisptr, void* edx, void* a2)
 	}
 }
 
-
 using WndProcFn = LRESULT(WINAPI*)(HWND, UINT, WPARAM, LPARAM);
 inline WndProcFn pWndProcOG = nullptr;
-
 LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
-	if (G::isMenuOpen && ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+	if (G::menu->IsOpen && ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
 		return 1;
 
 	return CallWindowProc(pWndProcOG, hwnd, msg, wParam, lParam);
 }
 
 typedef BOOL(WINAPI* SwapBuffers_t)(HDC);
-SwapBuffers_t o_SwapBuffers = nullptr;
+SwapBuffers_t pSwapBuffersOG = nullptr;
 BOOL WINAPI hk_SwapBuffers(HDC hdc) {
-	static bool initialized = false;
-	if (!initialized && wglGetCurrentContext()) {
-		HWND hwnd = WindowFromDC(hdc);
-		ImGui::CreateContext();
-		ImGui_ImplWin32_Init(hwnd);
-		ImGui_ImplOpenGL3_Init();
-		initialized = true;
+    if (!G::menu->Initialized && wglGetCurrentContext()) {
+        HWND hwnd = WindowFromDC(hdc);
+        pWndProcOG = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
+        G::menu->Initialize(hwnd);
+    }
+    
+    G::menu->Render();
 
-		// why the fuck it even works
-		pWndProcOG = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
-
-		auto io = ImGui::GetIO();
-
-		io.FontDefault = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Verdana.ttf",16.f);
-	}
-
-	if (initialized && G::isMenuOpen) {
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-		ImGui::StyleColorsLight();
-		ImGui::Begin("Hexium - Internal Cheat for Hexis");
-		
-		ImGui::Checkbox("Disable HD (Requires map restart)", &CFG::bDisableHD);
-		ImGui::Spacing();
-		ImGui::Checkbox("Timewarp", &CFG::bTimewarp);
-		if (CFG::bTimewarp) {
-			ImGui::SliderFloat("Speed", &CFG::flTimewarpSpeed, 0.1f, 2.f);
-		}
-		ImGui::End();
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-	}
-
-	return o_SwapBuffers(hdc);
+    return pSwapBuffersOG(hdc);
 }
+
+// TODO: move out of hooks??
 struct MouseInput {
-	int x;
-	int y;
-	int leftButtonDown;
-	int rightButtonDown;
-	int middleButtonDown;
+    int x;
+    int y;
+    int leftButtonDown;
+    int rightButtonDown;
+    int middleButtonDown;
 };
 
 using GetCursorInfoFn = int(__cdecl*)(MouseInput* a1);
 inline GetCursorInfoFn pGetCursorInfoOG = nullptr;
 int __cdecl GetCursorInfoDetour(MouseInput* a1) {
-	int result = pGetCursorInfoOG(a1);
-	//printf("Cursor Position: %i, %i\n", a1->x, a1->y);
-	a1->x = 500;
-	a1->y = 360;
-	return result;
-}
-DWORD WINAPI Entry(LPVOID lpParam)
-{
-#if _DEBUG
-	AllocConsole();
-	FILE* pFile;
-	freopen_s(&pFile, "CONOUT$", "w", stdout);
-	SetConsoleTitleA("Hexium Debug Console");
-#endif
-	
-	G::menu = std::make_shared<UI>();
+    int result = pGetCursorInfoOG(a1);
 
-	if (!LoadHooks()) return -1;
-
-	while (true) {
-		if (GetAsyncKeyState(VK_INSERT) & 1) {
-			G::menu->IsOpen = !G::menu->IsOpen;
-		}
-		Sleep(5); 
-	}
-	return 0;
-}
-
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
-{
-    switch (ul_reason_for_call)
-    {
-	case DLL_PROCESS_ATTACH:
-	{
-		DisableThreadLibraryCalls(hModule);
-		HANDLE hThread = CreateThread(NULL, 0, Entry, NULL, 0, NULL);
-		if (hThread) {
-			CloseHandle(hThread);
-		}
-	}
-	break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
-        break;
+    uintptr_t hexisBase = (uintptr_t)GetModuleHandleA(NULL);
+    uintptr_t ptr = *(uintptr_t*)(hexisBase + 0x515F6C);
+    if (ptr) {
+        int currentTime = *(int*)(ptr + 0x2B8);
+        // todo relax or auto
     }
-    return TRUE;
+
+    if (G::isPlaying) {
+        a1->x = 500;
+        a1->y = 300;
+    }
+
+    return result;
 }
 
+
+// Initialize all hooks
+bool LoadHooks() {
+    // Attempt to initialize MinHook
+    if (MH_Initialize() != MH_OK) {
+		return false;
+	}
+
+    // Loads the addresses of our hooks
+	auto SwapBuffersPtr = GetProcAddress(GetModuleHandleA("gdi32.dll"), "SwapBuffers");
+    CHECK_PATTERN(SwapBuffersPtr, "SwapBuffers");
+    auto ChannelSetAttributePtr = GetProcAddress(GetModuleHandleA("bass.dll"), "BASS_ChannelSetAttribute");
+	CHECK_PATTERN(ChannelSetAttributePtr, "BASS_ChannelSetAttribute");
+	auto OnDrawPtr = PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 81 EC ? ? ? ? 53 56 57 A1 ? ? ? ? 33 C5 50 8D 45 ? 64 A3 ? ? ? ? 89 4D ? 8B 59");
+	CHECK_PATTERN(OnDrawPtr, "OnDraw");
+	auto HasHiddenPtr = PatternScan("Hexis.exe", "8A 41 ? C3 CC CC CC CC CC CC CC CC CC CC CC CC 33 C0 39 41");
+	CHECK_PATTERN(HasHiddenPtr, "HasHidden");
+	auto StartGamePtr = PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? 53 56 57 A1 ? ? ? ? 33 C5 50 8D 45 ? 64 A3 ? ? ? ? 8B F9 89 7D ? 33 DB 8D B7");
+	CHECK_PATTERN(StartGamePtr, "StartGame");   
+	auto GetCursorInfoPtr = PatternScan("Hexis.exe", "55 8B EC 83 EC ? 8D 45 ? 0F 57 C0");
+	CHECK_PATTERN(GetCursorInfoPtr, "GetCursorInfo");
+
+    // Create hooks
+    ATTEMPT_CREATE_HOOK(SwapBuffersPtr, &hk_SwapBuffers, &pSwapBuffersOG, "SwapBuffers");
+    ATTEMPT_CREATE_HOOK(ChannelSetAttributePtr, &ChannelSetAttrDetour, &pChannelSetAttrOG, "ChannelSetAttribute");
+    ATTEMPT_CREATE_HOOK(OnDrawPtr, &OnDraw, pOnDrawOG, "OnDraw");
+    ATTEMPT_CREATE_HOOK(HasHiddenPtr, &HasHidden, pHasHiddenOG, "HasHidden");
+	ATTEMPT_CREATE_HOOK(StartGamePtr, &StartGame, pStartGameOG, "StartGame");
+    ATTEMPT_CREATE_HOOK(GetCursorInfoPtr, &GetCursorInfoDetour, pGetCursorInfoOG, "GetCursorInfo");
+
+    // Enable hooks
+    if (MH_EnableHook(MH_ALL_HOOKS) != MH_STATUS::MH_OK) {
+		printf("Failed to enable hooks!\n");
+        return false;
+	}
+
+    return true;
+}
