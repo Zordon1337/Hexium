@@ -84,55 +84,74 @@ class UI {
         ImGui::NewFrame();
         ImGui::StyleColorsLight();
         ImGui::Begin("Hexium - Internal Cheat for Hexis");
-        
-        ImGui::Checkbox("Disable HD (Requires map restart)", &UIConfig::bDisableHD);
-        ImGui::Spacing();
-        ImGui::Checkbox("Timewarp", &UIConfig::bTimewarp);
-        if (UIConfig::bTimewarp) {
-            ImGui::SliderFloat("Speed", &UIConfig::flTimewarpSpeed, 0.1f, 2.f);
-        }
-		ImGui::Checkbox("Server Switcher", &UIConfig::bServerSwitcher);
-		if (UIConfig::bServerSwitcher) {
-			if (UIGlobals::serverIpStrings.size() < 1)
-				ImGui::Text("No server IPs found. Please edit serverIps.txt to add some.");
-            int idx = UIConfig::iServerIpIndex;
-            if (idx < 0 || idx >= (int)UIGlobals::serverIpStrings.size())
-                idx = 0;
-            if (ImGui::BeginCombo("Select item", UIGlobals::serverIpStrings[idx].c_str())) {
-                for (int n = 0; n < (int)UIGlobals::serverIps.size(); n++) {
-                    bool is_selected = (idx == n);
-                    if (ImGui::Selectable(UIGlobals::serverIps[n], is_selected))
-                    {
-                        UIConfig::iServerIpIndex = n;
-                        const char* newHost = UIGlobals::serverIps[n];
-                        char buffer[16] = { 0 };
 
-                        strncpy_s(buffer, newHost, sizeof(buffer) - 1);
+        if (ImGui::BeginTabBar("Tabs")) {
 
-                        uintptr_t targetAddr = reinterpret_cast<uintptr_t>(GetModuleHandleA("Hexis.exe")) + 0x4957F8;
+            if (ImGui::BeginTabItem("Gameplay")) {
+                ImGui::Checkbox("Timewarp", &UIConfig::bTimewarp);
+                if (UIConfig::bTimewarp) {
+                    ImGui::SliderFloat("Speed", &UIConfig::flTimewarpSpeed, 0.1f, 2.f);
+                }
+                ImGui::EndTabItem();
+            }
 
-                        DWORD oldProtect;
-                        VirtualProtect((LPVOID)targetAddr, 16, PAGE_EXECUTE_READWRITE, &oldProtect);
-                        memcpy((void*)targetAddr, buffer, 16);
-                        VirtualProtect((LPVOID)targetAddr, 16, oldProtect, &oldProtect);
+            if (ImGui::BeginTabItem("Visuals")) {
+                ImGui::Checkbox("Disable HD (Requires map restart)", &UIConfig::bDisableHD);
+                ImGui::EndTabItem();
+            }
 
+            if (ImGui::BeginTabItem("Misc")) {
+                ImGui::Checkbox("Server Switcher", &UIConfig::bServerSwitcher);
+                if (UIConfig::bServerSwitcher) {
+                    if (UIGlobals::serverIpStrings.empty())
+                        ImGui::Text("No server IPs found. Please edit serverIps.txt to add some.");
+
+                    int idx = UIConfig::iServerIpIndex;
+                    if (idx < 0 || idx >= (int)UIGlobals::serverIpStrings.size())
+                        idx = 0;
+
+                    if (!UIGlobals::serverIpStrings.empty() &&
+                        ImGui::BeginCombo("Select item", UIGlobals::serverIpStrings[idx].c_str())) {
+
+                        for (int n = 0; n < (int)UIGlobals::serverIps.size(); n++) {
+                            bool is_selected = (idx == n);
+                            if (ImGui::Selectable(UIGlobals::serverIps[n], is_selected)) {
+                                UIConfig::iServerIpIndex = n;
+                                const char* newHost = UIGlobals::serverIps[n];
+                                char buffer[16] = { 0 };
+                                strncpy_s(buffer, newHost, sizeof(buffer) - 1);
+
+                                uintptr_t targetAddr = reinterpret_cast<uintptr_t>(GetModuleHandleA("Hexis.exe")) + 0x4957F8;
+
+                                DWORD oldProtect;
+                                if (VirtualProtect((LPVOID)targetAddr, sizeof(buffer), PAGE_EXECUTE_READWRITE, &oldProtect)) {
+                                    memcpy((void*)targetAddr, buffer, sizeof(buffer));
+                                    VirtualProtect((LPVOID)targetAddr, sizeof(buffer), oldProtect, &oldProtect);
+                                }
+                            }
+
+                            if (is_selected)
+                                ImGui::SetItemDefaultFocus();
+                        }
+                        ImGui::EndCombo();
                     }
 
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
+                    if (ImGui::Button("Edit IPs")) {
+                        system("notepad serverIps.txt");
+                        LoadIpsFromFile();
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Refresh")) {
+                        LoadIpsFromFile();
+                        UIConfig::iServerIpIndex = 0;
+                    }
                 }
-                ImGui::EndCombo();
+                ImGui::EndTabItem();
             }
 
-			if (ImGui::Button("Edit IPs")) {
-				system("notepad serverIps.txt"); // it waits for user to quit, should it? idk
-                LoadIpsFromFile();
-			}
-            if (ImGui::Button("Refresh")) {
-				LoadIpsFromFile();
-				UIConfig::iServerIpIndex = 0;
-            }
-		}
+            ImGui::EndTabBar();
+        }
+
         ImGui::End();
 
         ImGui::Render();
