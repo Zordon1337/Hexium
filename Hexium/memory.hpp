@@ -1,12 +1,15 @@
-#pragma once
+﻿#pragma once
 #include <Windows.h>
 #include <cstdint>
 #include <vector>
 #include <string>
 #include <sstream>
+#include "logger.hpp"
 
-class QString;
-class QByteArray;
+#include "Structs/QString.h"
+#include "Structs/QByteArray.h"
+
+#include "globals.hpp"
 
 namespace M {
 	using ToUtf8Fn = QByteArray * (__stdcall*)(QString* thisPtr);
@@ -16,7 +19,7 @@ namespace M {
 	inline ToUtf8Fn QString_toUtf8 = nullptr;
 	inline ConstDataFn QByteArray_constData = nullptr;
 	inline ToQString Utf8_toQString = nullptr;
-	// Pattern parsing + scanning
+
 	inline bool ParsePattern(const char* pattern, std::vector<uint8_t>& bytes, std::vector<bool>& mask) {
 		std::istringstream iss(pattern);
 		std::string byteStr;
@@ -67,9 +70,45 @@ namespace M {
 
 		return nullptr;
 	}
+}
 
+namespace U {
+	inline void Notification(const char* message, int durationMs) {
+		if (!message || !M::Utf8_toQString || !G::memoryInitialized) return;
+
+		using PrintNotifFn = void(__cdecl*)(QString* message, int durationMs);
+		PrintNotifFn PrintNotif = nullptr;
+
+		QString qMessage;
+
+		/*
+		* caching offset becase:
+		* 1. searching for pattern every time is slow asf
+		* 2. for some reason when searching for 2nd time it fails.
+		*/
+		auto static PrintPtr = M::PatternScan("Hexis.exe", "55 8B EC A1 ? ? ? ? 85 C0 74 ? 8D 88 ? ? ? ? 85 C9 74 ? FF 75 ? FF 75 ? 6A ? 6A ? 6A");
+
+		M::Utf8_toQString(&qMessage, message, -1);
+		if (!PrintPtr) {
+			PrintPtr = M::PatternScan("Hexis.exe", "55 8B EC A1 ? ? ? ? 85 C0 74 ? 8D 88 ? ? ? ? 85 C9 74 ? FF 75 ? FF 75 ? 6A ? 6A ? 6A");
+			PrintNotif = reinterpret_cast<PrintNotifFn>(PrintPtr);
+			if (PrintNotif) {
+				PrintNotif(&qMessage, durationMs);
+			}
+			else {
+				LOG_ERROR("PrintNotification not found!");
+			}
+			return;
+		}
+		else {
+			PrintNotif = reinterpret_cast<PrintNotifFn>(PrintPtr);
+			PrintNotif(&qMessage, durationMs);
+		}
+	}
+}
+
+namespace M {
 	inline bool Init() {
-
 		HMODULE qtcore = GetModuleHandleA("Qt5Core.dll");
 		if (!qtcore) {
 			LOG_ERROR("Qt5Core not loaded");
@@ -83,6 +122,9 @@ namespace M {
 			LOG_ERROR("Failed to resolve qt5core functions");
 			return false;
 		}
-	}
 
+		G::memoryInitialized = true;
+		U::Notification("Memory initialized successfully!", 3000);
+		return true;
+	}
 }

@@ -26,5 +26,7 @@
 namespace G {
     inline bool isDrawing = false;
     inline bool isPlaying = false;
+	inline bool memoryInitialized = false;
+	inline bool hooksInitialized = false;
     inline std::shared_ptr<UI> menu;
 }

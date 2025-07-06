@@ -13,99 +13,8 @@
 #include "ui.hpp"
 #include "memory.hpp"
 
-class QString {
-private:
-	char* m_data;
-	int m_length;
-
-public:
-	// Default constructor
-	QString() : m_data(nullptr), m_length(0) {}
-
-	// Constructor from const char*
-	QString(const char* str) {
-		if (str) {
-			m_length = static_cast<int>(std::strlen(str));
-			m_data = new char[m_length + 1];
-			std::memcpy(m_data, str, m_length + 1);
-		}
-		else {
-			m_data = nullptr;
-			m_length = 0;
-		}
-	}
-
-	// Copy constructor
-	QString(const QString& other) {
-		m_length = other.m_length;
-		if (other.m_data) {
-			m_data = new char[m_length + 1];
-			std::memcpy(m_data, other.m_data, m_length + 1);
-		}
-		else {
-			m_data = nullptr;
-		}
-	}
-
-	// Move constructor
-	QString(QString&& other) noexcept {
-		m_data = other.m_data;
-		m_length = other.m_length;
-		other.m_data = nullptr;
-		other.m_length = 0;
-	}
-
-	// Copy assignment
-	QString& operator=(const QString& other) {
-		if (this != &other) {
-			delete[] m_data;
-			m_length = other.m_length;
-			if (other.m_data) {
-				m_data = new char[m_length + 1];
-				std::memcpy(m_data, other.m_data, m_length + 1);
-			}
-			else {
-				m_data = nullptr;
-			}
-		}
-		return *this;
-	}
-
-	// Move assignment
-	QString& operator=(QString&& other) noexcept {
-		if (this != &other) {
-			delete[] m_data;
-			m_data = other.m_data;
-			m_length = other.m_length;
-			other.m_data = nullptr;
-			other.m_length = 0;
-		}
-		return *this;
-	}
-
-	// Destructor
-	~QString() {
-		delete[] m_data;
-	}
-
-	// Length
-	int length() const {
-		return m_length;
-	}
-
-	// toUtf8: mimic Qt API (here just return std::string)
-	std::string toUtf8() const {
-		return m_data ? std::string(m_data) : std::string();
-	}
-
-	// const char* access
-	const char* c_str() const {
-		return m_data;
-	}
-};
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 
 // TODO: move out of hooks??
 struct MouseInput {
@@ -164,8 +73,8 @@ namespace H {
 		if (message && M::QString_toUtf8 && M::QByteArray_constData) {
 			QByteArray* utf8 = M::QString_toUtf8(message);
 			const char* text = M::QByteArray_constData(utf8);
-			if (text)
-				printf("[Notification] %s\n", text);
+			//if (text)
+				//printf("[Notification] %s\n", text);
 		}
 	}
 
@@ -207,6 +116,9 @@ namespace H {
 			LOG_ERROR("Failed to enable hooks!\n");
 			return false;
 		}
+
+		G::hooksInitialized = true;
+		U::Notification("Hooked successfully!", 1000);
 
 		return true;
 	}

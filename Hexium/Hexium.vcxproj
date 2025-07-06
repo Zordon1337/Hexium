@@ -168,6 +168,8 @@
     <ClInclude Include="hooks.hpp" />
     <ClInclude Include="memory.hpp" />
     <ClInclude Include="logger.hpp" />
+    <ClInclude Include="Structs\QByteArray.h" />
+    <ClInclude Include="Structs\QString.h" />
     <ClInclude Include="ui.hpp" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
