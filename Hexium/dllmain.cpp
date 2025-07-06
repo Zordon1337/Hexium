@@ -95,6 +95,7 @@ bool __fastcall HasHidden(void* a1)
 	return CFG::bDisableHD ? false : result;
 }
 #include <chrono>
+#include <unordered_map>
 
 // Global
 inline std::chrono::steady_clock::time_point g_GameStartTime;
@@ -178,9 +179,14 @@ using GetCursorInfoFn = int(__cdecl*)(MouseInput* a1);
 inline GetCursorInfoFn pGetCursorInfoOG = nullptr;
 int __cdecl GetCursorInfoDetour(MouseInput* a1) {
 	int result = pGetCursorInfoOG(a1);
-	//printf("Cursor Position: %i, %i\n", a1->x, a1->y);
-	a1->x = 500;
-	a1->y = 360;
+
+
+	uintptr_t hexisBase = (uintptr_t)GetModuleHandleA(NULL); // safer than using string
+	uintptr_t ptr = *(uintptr_t*)(hexisBase + 0x515F6C);
+	if (ptr) {
+		int currentTime = *(int*)(ptr + 0x2B8);
+		// todo relax or auto
+	}
 	return result;
 }
 DWORD WINAPI Entry(LPVOID lpParam)
