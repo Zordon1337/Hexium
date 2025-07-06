@@ -13,7 +13,7 @@ void Notify::Send(const char* message, int durationMs) {
 	QString qMessage;
 
 	/*
-	* caching offset becase:
+	* caching offset because:
 	* 1. searching for pattern every time is slow asf
 	* 2. for some reason when searching for 2nd time it fails.
 	*/

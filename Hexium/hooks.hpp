@@ -1,9 +1,19 @@
 #pragma once
 
-#include <Windows.h>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include "platform.hpp"
+
+#pragma comment(lib, "Ws2_32.lib")
+
 #include <sstream>
 #include <vector>
 #include <libloaderapi.h>
+
 #include "globals.hpp"
 #include "Minhook/MinHook.h"
 
@@ -11,12 +21,13 @@
 #pragma comment(lib, "opengl32.lib")
 #include "ImGui/imgui_impl_opengl3.h"
 #include "ImGui/imgui_impl_dx9.h"
+
 #include "ui.hpp"
 #include "memory.hpp"
 #include "Utils/Notify.h"
-
 #include "Utils/DX9.hpp"
 #include "Utils/Game.h"
+
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -76,6 +87,8 @@ namespace H {
 	inline DX9ResetFn pDX9ResetOG = nullptr;
 	HRESULT __stdcall DX9Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pPresentationParameters);
 
+
+
 	// Initialize all hooks
 	inline bool Init() {
 		// Attempt to initialize MinHook
@@ -108,15 +121,23 @@ namespace H {
 		CHECK_PATTERN(GetCursorInfoPtr, "GetCursorInfo");
 		auto PrintPtr = M::PatternScan("Hexis.exe", "55 8B EC A1 ? ? ? ? 85 C0 74 ? 8D 88 ? ? ? ? 85 C9 74 ? FF 75 ? FF 75 ? 6A ? 6A ? 6A");
 		CHECK_PATTERN(PrintPtr, "PrintNotification");
-
+		auto ConnectToServerLoopPtr = M::PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 65 ? 8B F1");
+		CHECK_PATTERN(ConnectToServerLoopPtr, "ConnectToServer");
 
 		// Create hooks
+		// Hooking Bass_ChannelSetAttribute for Timewarp
 		CREATE_HOOK(ChannelSetAttributePtr, &H::ChannelSetAttrDetour, &H::pChannelSetAttrOG, "ChannelSetAttribute");
+		// I Don't even remember why I hooked this lol
 		CREATE_HOOK(OnDrawPtr, &H::OnDraw, &H::pOnDrawOG, "OnDraw");
+		// Hooking to spoof Mod Value
 		CREATE_HOOK(HasHiddenPtr, &H::HasHidden, &H::pHasHiddenOG, "HasHidden");
+		// Hooking to know when user started map
 		CREATE_HOOK(StartGamePtr, &H::StartGame, &H::pStartGameOG, "StartGame");
+		// Hooking GetCursorInfo for possibly rx or auto without touching input outside of game
 		CREATE_HOOK(GetCursorInfoPtr, &H::GetCursorInfoDetour, &H::pGetCursorInfoOG, "GetCursorInfo");
+		// Hooking PrintNotif
 		CREATE_HOOK(PrintPtr, &H::PrintNotifDetour, &H::pPrintNotifOG, "PrintNotification");
+
 		if (!isOpenGL) {
 			// we are using dx9
 			auto pDeviceVTable = *reinterpret_cast<uintptr_t**>(pDevice);

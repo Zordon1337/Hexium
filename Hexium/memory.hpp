@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <Windows.h>
+#include "platform.hpp"
 #include <cstdint>
 #include <vector>
 #include <string>

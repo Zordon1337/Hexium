@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include "platform.hpp"
 #include "Minhook/MinHook.h"
 #include <cstdint>
 #include <cstdio>

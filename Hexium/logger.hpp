@@ -1,6 +1,6 @@
 #pragma once
 #include <stdio.h>
-#include <Windows.h>
+#include "platform.hpp"
 #include "Utils/Notify.h"
 
 // surely its not copied from random cs2 sdk

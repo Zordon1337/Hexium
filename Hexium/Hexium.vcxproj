@@ -173,10 +173,10 @@
   <ItemGroup>
     <ClInclude Include="globals.hpp" />
     <ClInclude Include="hooks.hpp" />
+    <ClInclude Include="platform.hpp" />
     <ClInclude Include="ImGui\imgui_impl_dx9.h" />
     <ClInclude Include="memory.hpp" />
     <ClInclude Include="logger.hpp" />
-    <ClInclude Include="Structs\notify.hpp" />
     <ClInclude Include="Structs\QByteArray.h" />
     <ClInclude Include="Structs\QString.h" />
     <ClInclude Include="ui.hpp" />

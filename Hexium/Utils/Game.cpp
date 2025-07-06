@@ -1,6 +1,6 @@
 #include "Game.h"
 #include <cstdint>
-#include <Windows.h>
+#include "../platform.hpp"
 // Note, this is value from Settings, it will change once user changes their render type in settings
 // but we don't really care since we use this only on hooking
 bool Game::usesOpenGL() {
