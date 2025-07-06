@@ -142,6 +142,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Hooks\ChannelSetAttribute.cpp" />
+    <ClCompile Include="Hooks\GetCursorInfo.cpp" />
+    <ClCompile Include="Hooks\HasHidden.cpp" />
+    <ClCompile Include="Hooks\OnDraw.cpp" />
+    <ClCompile Include="Hooks\StartGame.cpp" />
+    <ClCompile Include="Hooks\SwapBuffers.cpp" />
+    <ClCompile Include="Hooks\WndProc.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
@@ -159,6 +166,7 @@
   <ItemGroup>
     <ClInclude Include="globals.hpp" />
     <ClInclude Include="hooks.hpp" />
+    <ClInclude Include="memory.hpp" />
     <ClInclude Include="logger.hpp" />
     <ClInclude Include="ui.hpp" />
     <ClInclude Include="ImGui\imconfig.h" />

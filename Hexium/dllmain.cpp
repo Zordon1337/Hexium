@@ -11,10 +11,6 @@
 #include "hooks.hpp"
 #include "ui.hpp"
 
-#include "ImGui/imgui_impl_win32.h"
-#pragma comment(lib, "opengl32.lib")
-#include "ImGui/imgui_impl_opengl3.h"
-
 DWORD WINAPI Entry(LPVOID lpParam)
 {
 #if _DEBUG
@@ -26,7 +22,7 @@ DWORD WINAPI Entry(LPVOID lpParam)
 	
 	G::menu = std::make_shared<UI>();
 
-	if (!LoadHooks()) return -1;
+	if (!H::Init()) return -1;
 
 	while (true) {
 		if (GetAsyncKeyState(VK_INSERT) & 1) {
