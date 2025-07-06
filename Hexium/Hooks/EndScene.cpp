@@ -4,7 +4,7 @@
 
 HRESULT __stdcall H::EndScene(IDirect3DDevice9* device) {
     if (!G::hooksInitialized) return H::pEndSceneOG(device);
-
+    const auto res = H::pEndSceneOG(device);
     if (!G::menu->Initialized) {
         auto params = D3DDEVICE_CREATION_PARAMETERS{ };
         device->GetCreationParameters(&params);
@@ -18,6 +18,5 @@ HRESULT __stdcall H::EndScene(IDirect3DDevice9* device) {
     }
 
     G::menu->Render();
-
-    return H::pEndSceneOG(device);
+    return res;
 }

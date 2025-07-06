@@ -66,25 +66,15 @@ namespace H {
 
 	using PrintNotifFn = void(__cdecl*)(QString* message, int durationMs);
 	inline PrintNotifFn pPrintNotifOG = nullptr;
-
-
-	// TODO: Move body to Hooks/PrintNotification.cpp
-	inline void __cdecl PrintNotifDetour(QString* message, int durationMs) {
-
-		// call og func first otherwise in game we will see funny chinese text lmao
-		pPrintNotifOG(message, durationMs);
-
-		if (message && M::QString_toUtf8 && M::QByteArray_constData) {
-			QByteArray* utf8 = M::QString_toUtf8(message);
-			const char* text = M::QByteArray_constData(utf8);
-			//if (text)
-				//printf("[Notification] %s\n", text);
-		}
-	}
+	void __cdecl PrintNotifDetour(QString* message, int durationMs);
 
 	using EndSceneFn = HRESULT(__stdcall*)(IDirect3DDevice9* device);
 	inline EndSceneFn pEndSceneOG = nullptr;
 	HRESULT __stdcall EndScene(IDirect3DDevice9* device);
+
+	using DX9ResetFn = HRESULT(__stdcall*)(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pPresentationParameters);
+	inline DX9ResetFn pDX9ResetOG = nullptr;
+	HRESULT __stdcall DX9Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pPresentationParameters);
 
 	// Initialize all hooks
 	inline bool Init() {
@@ -126,7 +116,7 @@ namespace H {
 		CREATE_HOOK(HasHiddenPtr, &H::HasHidden, &H::pHasHiddenOG, "HasHidden");
 		CREATE_HOOK(StartGamePtr, &H::StartGame, &H::pStartGameOG, "StartGame");
 		CREATE_HOOK(GetCursorInfoPtr, &H::GetCursorInfoDetour, &H::pGetCursorInfoOG, "GetCursorInfo");
-		CREATE_HOOK(PrintPtr, &PrintNotifDetour, &pPrintNotifOG, "PrintNotification");
+		CREATE_HOOK(PrintPtr, &H::PrintNotifDetour, &H::pPrintNotifOG, "PrintNotification");
 		if (!isOpenGL) {
 			// we are using dx9
 			auto pDeviceVTable = *reinterpret_cast<uintptr_t**>(pDevice);
@@ -134,6 +124,8 @@ namespace H {
 			CREATE_HOOK(pDeviceVTable[42], &EndScene, &pEndSceneOG, "EndScene");
 			UIGlobals::bIsOpenGL = false;
 			UIGlobals::pDevice = pDevice;
+			auto DX9ResetPtr = pDeviceVTable[16];
+			CREATE_HOOK(DX9ResetPtr, &DX9Reset, &pDX9ResetOG, "DX9 Reset");
 		}
 		else {
 			// we are using opengl

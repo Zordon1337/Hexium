@@ -143,10 +143,12 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Hooks\ChannelSetAttribute.cpp" />
+    <ClCompile Include="Hooks\DX9Reset.cpp" />
     <ClCompile Include="Hooks\EndScene.cpp" />
     <ClCompile Include="Hooks\GetCursorInfo.cpp" />
     <ClCompile Include="Hooks\HasHidden.cpp" />
     <ClCompile Include="Hooks\OnDraw.cpp" />
+    <ClCompile Include="Hooks\PrintNotification.cpp" />
     <ClCompile Include="Hooks\StartGame.cpp" />
     <ClCompile Include="Hooks\SwapBuffers.cpp" />
     <ClCompile Include="Hooks\WndProc.cpp" />
