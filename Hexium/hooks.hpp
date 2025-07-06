@@ -156,8 +156,8 @@ int __cdecl GetCursorInfoDetour(MouseInput* a1) {
     }
 
     if (G::isPlaying) {
-        a1->x = 500;
-        a1->y = 300;
+        //a1->x = 500;
+        //a1->y = 300;
     }
 
     return result;
@@ -186,12 +186,12 @@ bool LoadHooks() {
 	CHECK_PATTERN(GetCursorInfoPtr, "GetCursorInfo");
 
     // Create hooks
-    ATTEMPT_CREATE_HOOK(SwapBuffersPtr, &hk_SwapBuffers, &pSwapBuffersOG, "SwapBuffers");
-    ATTEMPT_CREATE_HOOK(ChannelSetAttributePtr, &ChannelSetAttrDetour, &pChannelSetAttrOG, "ChannelSetAttribute");
-    ATTEMPT_CREATE_HOOK(OnDrawPtr, &OnDraw, pOnDrawOG, "OnDraw");
-    ATTEMPT_CREATE_HOOK(HasHiddenPtr, &HasHidden, pHasHiddenOG, "HasHidden");
-	ATTEMPT_CREATE_HOOK(StartGamePtr, &StartGame, pStartGameOG, "StartGame");
-    ATTEMPT_CREATE_HOOK(GetCursorInfoPtr, &GetCursorInfoDetour, pGetCursorInfoOG, "GetCursorInfo");
+	CREATE_HOOK(SwapBuffersPtr, &hk_SwapBuffers, &pSwapBuffersOG, "SwapBuffers");
+	CREATE_HOOK(ChannelSetAttributePtr, &ChannelSetAttrDetour, &pChannelSetAttrOG, "ChannelSetAttribute");
+	CREATE_HOOK(OnDrawPtr, &OnDraw, pOnDrawOG, "OnDraw");
+	CREATE_HOOK(HasHiddenPtr, &HasHidden, pHasHiddenOG, "HasHidden");
+	CREATE_HOOK(StartGamePtr, &StartGame, pStartGameOG, "StartGame");
+	CREATE_HOOK(GetCursorInfoPtr, &GetCursorInfoDetour, pGetCursorInfoOG, "GetCursorInfo");
 
     // Enable hooks
     if (MH_EnableHook(MH_ALL_HOOKS) != MH_STATUS::MH_OK) {

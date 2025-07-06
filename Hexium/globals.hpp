@@ -11,7 +11,7 @@
         printf("%s found at: %p\n", NAME, PATTERN); \
     }
 
-#define ATTEMPT_CREATE_HOOK(TARGET, DETOUR, ORIGINAL, NAME) \
+#define CREATE_HOOK(TARGET, DETOUR, ORIGINAL, NAME) \
     do { \
         if (MH_CreateHook(reinterpret_cast<LPVOID>(TARGET), reinterpret_cast<LPVOID>(DETOUR), reinterpret_cast<LPVOID*>(ORIGINAL)) != MH_OK) { \
             printf("Failed to create %s hook!\n", NAME); \
