@@ -13,6 +13,7 @@
 #include "ui.hpp"
 #include "memory.hpp"
 
+#include "Utils/Notify.h"
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -118,7 +119,7 @@ namespace H {
 		}
 
 		G::hooksInitialized = true;
-		U::Notification("Hooked successfully!", 1000);
+		Notify::Send("Hooked successfully!", 1000);
 
 		return true;
 	}

@@ -1,7 +1,7 @@
 #pragma once
-
 #include <stdio.h>
 #include <Windows.h>
+#include "Utils/Notify.h"
 
 // surely its not copied from random cs2 sdk
 #define LOG(fmt, ...) logger::log(__FILE__, __LINE__, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE, fmt, __VA_ARGS__)
@@ -13,6 +13,7 @@
 namespace logger {
     inline void log(const char* file, int line, WORD color, const char* fmt, ...)
     {
+
         // Get current time
         SYSTEMTIME time;
         GetLocalTime(&time);
@@ -24,26 +25,35 @@ namespace logger {
         WORD originalAttrs = consoleInfo.wAttributes;
 
         // Print the time
-        printf(("[%02d:%02d:%02d] "), time.wHour, time.wMinute, time.wSecond);
+        printf("[%02d:%02d:%02d] ", time.wHour, time.wMinute, time.wSecond);
 
         // remove path from file
         const char* file_name = strrchr(file, '\\') + 1;
 
         // Set the desired text color for file:line
         SetConsoleTextAttribute(hConsole, color);
-        printf(("%s:%d:"), file_name, line);
+        printf("%s:%d:", file_name, line);
 
         // Reset to original console attributes
         SetConsoleTextAttribute(hConsole, originalAttrs);
         printf(" ");
 
-        // Print the rest of the log message
+        // Format the log message using sprintf_s
+        char buffer[1024];
         va_list args;
         va_start(args, fmt);
-        vprintf(fmt, args);
+        vsprintf_s(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
-        // Print a newline
-        printf("\n");
+        // Print the formatted message
+        printf("%s\n", buffer);
+
+#if _DEBUG
+        // kinda joke 
+        auto logstring = std::string(buffer);
+        logstring = logstring.substr(0, logstring.find_last_of('\n'));
+        logstring = logstring.substr(0, logstring.find_last_of('\r'));
+        Notify::Send(logstring.c_str(), 2500);
+#endif
     }
 }

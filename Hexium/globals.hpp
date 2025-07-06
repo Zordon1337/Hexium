@@ -3,6 +3,7 @@
 #include "ui.hpp"
 #include "logger.hpp"
 
+
 #define CHECK_PATTERN(PATTERN, NAME) \
     if (!PATTERN) { \
         LOG_ERROR("%s not found!\n", NAME); \

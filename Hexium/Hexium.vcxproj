@@ -162,12 +162,15 @@
     <ClCompile Include="Minhook\MinHook\hde\hde64.c" />
     <ClCompile Include="Minhook\MinHook\hook.c" />
     <ClCompile Include="Minhook\MinHook\trampoline.c" />
+    <ClCompile Include="Utils\Notify.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.hpp" />
     <ClInclude Include="hooks.hpp" />
     <ClInclude Include="memory.hpp" />
     <ClInclude Include="logger.hpp" />
+    <ClInclude Include="Hexium.hpp" />
+    <ClInclude Include="Structs\notify.hpp" />
     <ClInclude Include="Structs\QByteArray.h" />
     <ClInclude Include="Structs\QString.h" />
     <ClInclude Include="ui.hpp" />
@@ -189,6 +192,7 @@
     <ClInclude Include="Minhook\MinHook\hde\table32.h" />
     <ClInclude Include="Minhook\MinHook\hde\table64.h" />
     <ClInclude Include="Minhook\MinHook\trampoline.h" />
+    <ClInclude Include="Utils\Notify.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
