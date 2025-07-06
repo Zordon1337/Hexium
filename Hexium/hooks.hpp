@@ -188,10 +188,10 @@ bool LoadHooks() {
     // Create hooks
 	CREATE_HOOK(SwapBuffersPtr, &hk_SwapBuffers, &pSwapBuffersOG, "SwapBuffers");
 	CREATE_HOOK(ChannelSetAttributePtr, &ChannelSetAttrDetour, &pChannelSetAttrOG, "ChannelSetAttribute");
-	CREATE_HOOK(OnDrawPtr, &OnDraw, pOnDrawOG, "OnDraw");
-	CREATE_HOOK(HasHiddenPtr, &HasHidden, pHasHiddenOG, "HasHidden");
-	CREATE_HOOK(StartGamePtr, &StartGame, pStartGameOG, "StartGame");
-	CREATE_HOOK(GetCursorInfoPtr, &GetCursorInfoDetour, pGetCursorInfoOG, "GetCursorInfo");
+	CREATE_HOOK(OnDrawPtr, &OnDraw, &pOnDrawOG, "OnDraw");
+	CREATE_HOOK(HasHiddenPtr, &HasHidden, &pHasHiddenOG, "HasHidden");
+	CREATE_HOOK(StartGamePtr, &StartGame, &pStartGameOG, "StartGame");
+	CREATE_HOOK(GetCursorInfoPtr, &GetCursorInfoDetour, &pGetCursorInfoOG, "GetCursorInfo");
 
     // Enable hooks
     if (MH_EnableHook(MH_ALL_HOOKS) != MH_STATUS::MH_OK) {

@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="globals.hpp" />
     <ClInclude Include="hooks.hpp" />
+    <ClInclude Include="logger.hpp" />
     <ClInclude Include="ui.hpp" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
