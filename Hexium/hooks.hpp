@@ -42,12 +42,6 @@ struct MouseInput {
 };
 
 namespace H {
-
-	using GetCursorInfoFn = int(__cdecl*)(MouseInput* a1);
-	inline GetCursorInfoFn pGetCursorInfoOG = nullptr;
-	int __cdecl GetCursorInfoDetour(MouseInput* a1);
-
-
 	typedef BOOL(WINAPI* SwapBuffers_t)(HDC);
 	inline SwapBuffers_t pSwapBuffersOG = nullptr;
 	BOOL WINAPI hk_SwapBuffers(HDC hdc);
@@ -92,10 +86,6 @@ namespace H {
 	inline DrawBeatmapFn pDrawBeatmapOG = nullptr;
 	void __fastcall DrawBeatmap(void* a1, void* a2, void* a3);
 
-	using GetCursorPosFn = BOOL(WINAPI*)(LPPOINT lpPoint);
-	inline GetCursorPosFn pGetCursorPosOG = nullptr;
-	BOOL WINAPI GetCursorPosDetour(LPPOINT lpPoint);
-
 	// Initialize all hooks
 	inline bool Init() {
 		// Attempt to initialize MinHook
@@ -128,12 +118,8 @@ namespace H {
 		CHECK_PATTERN(GetCursorInfoPtr, "GetCursorInfo");
 		auto PrintPtr = M::PatternScan("Hexis.exe", "55 8B EC A1 ? ? ? ? 85 C0 74 ? 8D 88 ? ? ? ? 85 C9 74 ? FF 75 ? FF 75 ? 6A ? 6A ? 6A");
 		CHECK_PATTERN(PrintPtr, "PrintNotification");
-		auto ConnectToServerLoopPtr = M::PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 65 ? 8B F1");
-		CHECK_PATTERN(ConnectToServerLoopPtr, "ConnectToServer");
 		auto DrawBeatmapPtr = M::PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? 53 56 57 A1 ? ? ? ? 33 C5 50 8D 45 ? 64 A3 ? ? ? ? 8B D9 89 5D ? 33 C0 89 45 ? F3 0F 10 45");
 		CHECK_PATTERN(DrawBeatmapPtr, "DrawBeatmap");
-		auto GetCursorPosPtr = GetProcAddress(GetModuleHandleA("user32.dll"), "GetCursorPos");
-		CHECK_PATTERN(GetCursorPosPtr, "GetCursorPos");
 		// Create hooks
 		// Hooking Bass_ChannelSetAttribute for Timewarp
 		CREATE_HOOK(ChannelSetAttributePtr, &H::ChannelSetAttrDetour, &H::pChannelSetAttrOG, "ChannelSetAttribute");
@@ -143,14 +129,10 @@ namespace H {
 		CREATE_HOOK(HasHiddenPtr, &H::HasHidden, &H::pHasHiddenOG, "HasHidden");
 		// Hooking to know when user started map
 		CREATE_HOOK(StartGamePtr, &H::StartGame, &H::pStartGameOG, "StartGame");
-		// Hooking GetCursorInfo for possibly rx or auto without touching input outside of game
-		CREATE_HOOK(GetCursorInfoPtr, &H::GetCursorInfoDetour, &H::pGetCursorInfoOG, "GetCursorInfo");
 		// Hooking PrintNotif
 		CREATE_HOOK(PrintPtr, &H::PrintNotifDetour, &H::pPrintNotifOG, "PrintNotification");
 		// Hooking DrawBeatmap for Replay bot
 		CREATE_HOOK(DrawBeatmapPtr, &H::DrawBeatmap, &H::pDrawBeatmapOG, "DrawBeatmap");
-		// Hooking GetCursorPos
-		CREATE_HOOK(GetCursorPosPtr, &H::GetCursorPosDetour, &H::pGetCursorPosOG, "GetCursorPos");
 
 		if (!isOpenGL) {
 			// we are using dx9

@@ -95,7 +95,7 @@ class UI {
         auto io = ImGui::GetIO();
 
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange; // optional
+        io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
         io.FontDefault = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Verdana.ttf",16.f);
         LoadIpsFromFile();
     }
