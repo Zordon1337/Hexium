@@ -38,6 +38,6 @@
 
 - **ReplayBot** only supports `.osr` replays that are **converted** using a specific tool.
 - **Server Switcher** supports the redirect target to **15 characters** max.
-
+- **Build as X86 | Debug** cheat was designed to build only under this configuration
 ---
 
