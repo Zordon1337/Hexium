@@ -142,10 +142,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Hooks\BeatmapScene.cpp" />
     <ClCompile Include="Hooks\ChannelSetAttribute.cpp" />
     <ClCompile Include="Hooks\DX9Reset.cpp" />
     <ClCompile Include="Hooks\EndScene.cpp" />
     <ClCompile Include="Hooks\GetCursorInfo.cpp" />
+    <ClCompile Include="Hooks\GetCursorPos.cpp" />
     <ClCompile Include="Hooks\HasHidden.cpp" />
     <ClCompile Include="Hooks\OnDraw.cpp" />
     <ClCompile Include="Hooks\PrintNotification.cpp" />
@@ -169,6 +171,7 @@
     <ClCompile Include="Utils\DX9.cpp" />
     <ClCompile Include="Utils\Game.cpp" />
     <ClCompile Include="Utils\Notify.cpp" />
+    <ClCompile Include="Utils\ReplayParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.hpp" />
@@ -201,6 +204,7 @@
     <ClInclude Include="Utils\DX9.hpp" />
     <ClInclude Include="Utils\Game.h" />
     <ClInclude Include="Utils\Notify.h" />
+    <ClInclude Include="Utils\ReplayParser.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

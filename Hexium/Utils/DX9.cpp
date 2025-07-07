@@ -1,5 +1,5 @@
 #include "DX9.hpp"
-
+#include "../ui.hpp"
 namespace DX9 {
     IDirect3DDevice9* GetD3D9Device() {
 
@@ -20,7 +20,9 @@ namespace DX9 {
             &d3dpp,
             &pDevice
         );
+
 		DX9::hwnd = d3dpp.hDeviceWindow;
+		UIGlobals::hwnd = DX9::hwnd;
         pD3D->Release();
 
         if (FAILED(hr)) return nullptr;

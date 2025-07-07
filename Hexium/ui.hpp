@@ -8,12 +8,18 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <commdlg.h>
+#include "Utils/ReplayParser.h"
 namespace UIConfig {
     inline bool bDisableHD = false;
     inline bool bTimewarp = false;
     inline float flTimewarpSpeed = 1.0f;
+
     inline bool bServerSwitcher = false;
 	inline int iServerIpIndex = 0;
+
+    inline bool bReplayBot = false;
+    inline char srReplayPath[256] = "";
 }
 namespace UIGlobals {
     inline bool bIsOpenGL = false;
@@ -23,6 +29,29 @@ namespace UIGlobals {
     inline std::vector<std::string> serverIpStrings;
 }
 class UI {
+    private:
+    bool IsWindowFullscreen(HWND hwnd) {
+        if (!hwnd)
+            return false;
+        RECT windowRect;
+        if (!GetWindowRect(hwnd, &windowRect))
+            return false;
+        HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        if (!monitor)
+            return false;
+        MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+        if (!GetMonitorInfo(monitor, &monitorInfo))
+            return false;
+
+        RECT& monitorRect = monitorInfo.rcMonitor;
+        int tolerance = 2;
+        bool isFullscreen =
+            abs(windowRect.left - monitorRect.left) <= tolerance &&
+            abs(windowRect.top - monitorRect.top) <= tolerance &&
+            abs(windowRect.right - monitorRect.right) <= tolerance &&
+            abs(windowRect.bottom - monitorRect.bottom) <= tolerance;
+        return isFullscreen;
+    }
     public:
     bool Initialized = false;
     bool IsOpen = true;
@@ -99,6 +128,47 @@ class UI {
                 ImGui::Checkbox("Disable HD (Requires map restart)", &UIConfig::bDisableHD);
                 ImGui::EndTabItem();
             }
+            if (ImGui::BeginTabItem("Osu replay bot")) {
+
+				if (!IsWindowFullscreen(UIGlobals::hwnd)) {
+					ImGui::TextWrapped("Warning! Replay bot works only in fullscreen mode!");
+					ImGui::TextWrapped("Please switch to fullscreen mode to use it.");
+                    UIConfig::bReplayBot = false;
+                }
+                else {
+                    ImGui::Checkbox("Toggle", &UIConfig::bReplayBot);
+
+                    if (UIConfig::bReplayBot) {
+                        ImGui::TextWrapped("Warning! Replays must be first unpacked & converted via osuReplayExtractor");
+                        ImGui::TextWrapped("Get it here: https://github.com/MateusPevidor/osuReplayExtractor/tree/master");
+
+                        ImGui::InputText("Replay Path", UIConfig::srReplayPath, IM_ARRAYSIZE(UIConfig::srReplayPath));
+
+                        if (ImGui::Button("Select Replay")) {
+                            char filename[MAX_PATH] = "";
+
+                            OPENFILENAMEA ofn = { 0 };
+                            ofn.lStructSize = sizeof(ofn);
+                            ofn.hwndOwner = nullptr;
+                            ofn.lpstrFile = filename;
+                            ofn.nMaxFile = MAX_PATH;
+                            ofn.lpstrFilter = "Replay Files\0*.osr\0All Files\0*.*\0";
+                            ofn.nFilterIndex = 1;
+                            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+                            if (GetOpenFileNameA(&ofn)) {
+                                strncpy_s(UIConfig::srReplayPath, filename, IM_ARRAYSIZE(UIConfig::srReplayPath) - 1);
+                                UIConfig::srReplayPath[IM_ARRAYSIZE(UIConfig::srReplayPath) - 1] = '\0';
+
+                            }
+                        }
+                    }
+                }
+                
+
+                ImGui::EndTabItem();
+            }
+
 
             if (ImGui::BeginTabItem("Misc")) {
                 ImGui::Checkbox("Server Switcher", &UIConfig::bServerSwitcher);

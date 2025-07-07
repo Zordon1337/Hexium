@@ -35,6 +35,7 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 struct MouseInput {
 	int x;
 	int y;
+	// the ones under are not confirmed, unknown tbh
 	int leftButtonDown;
 	int rightButtonDown;
 	int middleButtonDown;
@@ -87,7 +88,13 @@ namespace H {
 	inline DX9ResetFn pDX9ResetOG = nullptr;
 	HRESULT __stdcall DX9Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pPresentationParameters);
 
+	using DrawBeatmapFn = void(__fastcall*)(void* a1, void* a2, void* a3);
+	inline DrawBeatmapFn pDrawBeatmapOG = nullptr;
+	void __fastcall DrawBeatmap(void* a1, void* a2, void* a3);
 
+	using GetCursorPosFn = BOOL(WINAPI*)(LPPOINT lpPoint);
+	inline GetCursorPosFn pGetCursorPosOG = nullptr;
+	BOOL WINAPI GetCursorPosDetour(LPPOINT lpPoint);
 
 	// Initialize all hooks
 	inline bool Init() {
@@ -123,7 +130,10 @@ namespace H {
 		CHECK_PATTERN(PrintPtr, "PrintNotification");
 		auto ConnectToServerLoopPtr = M::PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 65 ? 8B F1");
 		CHECK_PATTERN(ConnectToServerLoopPtr, "ConnectToServer");
-
+		auto DrawBeatmapPtr = M::PatternScan("Hexis.exe", "55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? 53 56 57 A1 ? ? ? ? 33 C5 50 8D 45 ? 64 A3 ? ? ? ? 8B D9 89 5D ? 33 C0 89 45 ? F3 0F 10 45");
+		CHECK_PATTERN(DrawBeatmapPtr, "DrawBeatmap");
+		auto GetCursorPosPtr = GetProcAddress(GetModuleHandleA("user32.dll"), "GetCursorPos");
+		CHECK_PATTERN(GetCursorPosPtr, "GetCursorPos");
 		// Create hooks
 		// Hooking Bass_ChannelSetAttribute for Timewarp
 		CREATE_HOOK(ChannelSetAttributePtr, &H::ChannelSetAttrDetour, &H::pChannelSetAttrOG, "ChannelSetAttribute");
@@ -137,6 +147,10 @@ namespace H {
 		CREATE_HOOK(GetCursorInfoPtr, &H::GetCursorInfoDetour, &H::pGetCursorInfoOG, "GetCursorInfo");
 		// Hooking PrintNotif
 		CREATE_HOOK(PrintPtr, &H::PrintNotifDetour, &H::pPrintNotifOG, "PrintNotification");
+		// Hooking DrawBeatmap for Replay bot
+		CREATE_HOOK(DrawBeatmapPtr, &H::DrawBeatmap, &H::pDrawBeatmapOG, "DrawBeatmap");
+		// Hooking GetCursorPos
+		CREATE_HOOK(GetCursorPosPtr, &H::GetCursorPosDetour, &H::pGetCursorPosOG, "GetCursorPos");
 
 		if (!isOpenGL) {
 			// we are using dx9
