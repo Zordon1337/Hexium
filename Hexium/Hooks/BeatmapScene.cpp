@@ -78,13 +78,13 @@ void __fastcall H::DrawBeatmap(void* a1, void* a2, void* a3) {
                 inputs.push_back(input);
             }
 
-            if (!inputs.empty() && UIConfig::bReplayBotDisableRelax) {
+            if (!inputs.empty() && !UIConfig::bReplayBotDisableRelax) {
                 SendInput(static_cast<UINT>(inputs.size()), inputs.data(), sizeof(INPUT));
             }
 
             lastButtons = currentButtons;
 
-            if ((frame.MouseX != lastMouseX || frame.MouseY != lastMouseY) && UIConfig::bReplayBotDisableAuto) {
+            if ((frame.MouseX != lastMouseX || frame.MouseY != lastMouseY) && !UIConfig::bReplayBotDisableAuto) {
                 SetCursorPos(static_cast<int>(frame.MouseX), static_cast<int>(frame.MouseY));
                 lastMouseX = frame.MouseX;
                 lastMouseY = frame.MouseY;
