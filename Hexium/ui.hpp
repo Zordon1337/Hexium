@@ -19,6 +19,8 @@ namespace UIConfig {
 	inline int iServerIpIndex = 0;
 
     inline bool bReplayBot = false;
+    inline bool bReplayBotDisableRelax = false;
+    inline bool bReplayBotDisableAuto = false;
     inline char srReplayPath[256] = "";
 }
 namespace UIGlobals {
@@ -141,7 +143,8 @@ class UI {
                     if (UIConfig::bReplayBot) {
                         ImGui::TextWrapped("Warning! Replays must be first unpacked & converted via osuReplayExtractor");
                         ImGui::TextWrapped("Get it here: https://github.com/MateusPevidor/osuReplayExtractor/tree/master");
-
+                        ImGui::Checkbox("Disable Relax", &UIConfig::bReplayBotDisableRelax);
+                        ImGui::Checkbox("Disable Auto", &UIConfig::bReplayBotDisableAuto);
                         ImGui::InputText("Replay Path", UIConfig::srReplayPath, IM_ARRAYSIZE(UIConfig::srReplayPath));
 
                         if (ImGui::Button("Select Replay")) {
