@@ -12,12 +12,12 @@
 
 ## ✨ Features
 
-| Feature           | Description                                                                 |
-|-------------------|-----------------------------------------------------------------------------|
-| **Timewarp**     | Dynamically slow down or speed up time (range: 0.5x to 2x)                |
-| **ReplayBot**    | Plays osu! replays (requires pre-converted & unpacked `.osr` files)       |
-| **Server Switcher** | Redirects `hnet.dienay.net` to any IP/domain (max 15 characters)     |
-| **No Hidden**     | Disables the hidden visual effect for better visibility                  |
+| Feature           |
+|-------------------|
+| **Timewarp**     |
+| **ReplayBot**    |
+| **Server Switcher** |
+| **No Hidden**     |
 
 ---
 
